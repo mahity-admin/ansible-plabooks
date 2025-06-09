@@ -1,6 +1,6 @@
 ---
 - name: Configure Apache Server
-  hosts: webserver
+  hosts: web
   tasks:
     - name: Install Apache Packages
       yum:
