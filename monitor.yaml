@@ -21,18 +21,24 @@
       ansible.builtin.command: cat /etc/fstab
       register: fstab_output
 
-    - name: Save collected data to control node
-      delegate_to: localhost
-      run_once: true
-      copy:
-        content: |
+    - name: Set facts with gathered outputs
+      set_fact:
+        system_monitor_data: |
           ==== LSBLK OUTPUT ====
-          {{ hostvars[inventory_hostname].lsblk_output.stdout }}
+          {{ lsblk_output.stdout }}
 
           ==== TOP OUTPUT ====
-          {{ hostvars[inventory_hostname].top_output.stdout }}
+          {{ top_output.stdout }}
 
           ==== FSTAB CONTENT ====
-          {{ hostvars[inventory_hostname].fstab_output.stdout }}
+          {{ fstab_output.stdout }}
 
-        dest: "/tmp/system_monitor_{{ inventory_hostname }}.txt"
+- name: Save collected data to control node
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Write each host's system monitor data to file
+      copy:
+        content: "{{ hostvars[item].system_monitor_data }}"
+        dest: "/tmp/system_monitor_{{ item }}.txt"
+      loop: "{{ groups['web'] }}"
