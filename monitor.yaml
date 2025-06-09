@@ -1,0 +1,38 @@
+---
+- name: Gather system info and ensure web group
+  hosts: web
+  become: yes
+
+  tasks:
+    - name: Ensure group 'web' exists
+      ansible.builtin.group:
+        name: web
+        state: present
+
+    - name: Run lsblk and save output
+      ansible.builtin.command: lsblk
+      register: lsblk_output
+
+    - name: Run top -b -n1 and save output
+      ansible.builtin.command: top -b -n1
+      register: top_output
+
+    - name: Run cat /etc/fstab and save output
+      ansible.builtin.command: cat /etc/fstab
+      register: fstab_output
+
+    - name: Save collected data to control node
+      delegate_to: localhost
+      run_once: true
+      copy:
+        content: |
+          ==== LSBLK OUTPUT ====
+          {{ hostvars[inventory_hostname].lsblk_output.stdout }}
+
+          ==== TOP OUTPUT ====
+          {{ hostvars[inventory_hostname].top_output.stdout }}
+
+          ==== FSTAB CONTENT ====
+          {{ hostvars[inventory_hostname].fstab_output.stdout }}
+
+        dest: "/tmp/system_monitor_{{ inventory_hostname }}.txt"
