@@ -1,20 +1,25 @@
 - hosts: ansible-test1.mahity.local
   remote_user: karan             # SSH user to connect as
-  become: yes                   # enable privilege escalation
-  become_user: karan            # escalate to user karan (could be root if needed)
+  become: yes                    # Enable privilege escalation
+  become_user: karan             # Escalate to user karan (could be root if needed)
   become_method: sudo
 
   tasks:
     - name: Gather facts
       ansible.builtin.setup:
 
+    - name: Ensure group web exists
+      ansible.builtin.group:
+        name: web
+        state: present
+
     - name: Create a directory with group web
-      file:
+      ansible.builtin.file:
         path: /tmp/testdir
         state: directory
-        mode: '2775'         # set SGID bit so new files inherit the group
         owner: karan
         group: web
+        mode: '0755'
 
     - name: Run a shell command with group web
       ansible.builtin.shell: |
