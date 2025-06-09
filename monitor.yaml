@@ -1,44 +1,38 @@
----
-- name: Gather system info and ensure web group
+- name: Collect and store system info
   hosts: web
   become: yes
-
   tasks:
-    - name: Ensure group 'web' exists
-      ansible.builtin.group:
-        name: web
-        state: present
+    - name: Gather lsblk
+      command: lsblk
+      register: lsblk_out
 
-    - name: Run lsblk and save output
-      ansible.builtin.command: lsblk
-      register: lsblk_output
+    - name: Gather top
+      command: top -b -n1
+      register: top_out
 
-    - name: Run top -b -n1 and save output
-      ansible.builtin.command: top -b -n1
-      register: top_output
+    - name: Gather fstab
+      command: cat /etc/fstab
+      register: fstab_out
 
-    - name: Run cat /etc/fstab and save output
-      ansible.builtin.command: cat /etc/fstab
-      register: fstab_output
-
-    - name: Set facts with gathered outputs
+    - name: Combine system info
       set_fact:
-        system_monitor_data: |
-          ==== LSBLK OUTPUT ====
-          {{ lsblk_output.stdout }}
+        system_info: |
+          ==== LSBLK ====
+          {{ lsblk_out.stdout }}
 
-          ==== TOP OUTPUT ====
-          {{ top_output.stdout }}
+          ==== TOP ====
+          {{ top_out.stdout }}
 
-          ==== FSTAB CONTENT ====
-          {{ fstab_output.stdout }}
+          ==== FSTAB ====
+          {{ fstab_out.stdout }}
 
-- name: Save collected data to control node
-  hosts: localhost
-  gather_facts: no
-  tasks:
-    - name: Write each host's system monitor data to file
+    - name: Save system info on managed host
       copy:
-        content: "{{ hostvars[item].system_monitor_data }}"
-        dest: "/tmp/system_monitor_{{ item }}.txt"
-      loop: "{{ groups['web'] }}"
+        content: "{{ system_info }}"
+        dest: "/tmp/system_monitor_{{ inventory_hostname }}.txt"
+
+    - name: Fetch system info file to Tower
+      fetch:
+        src: "/tmp/system_monitor_{{ inventory_hostname }}.txt"
+        dest: "./fetched_system_info/"
+        flat: yes
