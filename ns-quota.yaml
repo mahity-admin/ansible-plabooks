@@ -1,6 +1,7 @@
 ---
 - name: Create namespace and apply resource quota
   hosts: localhost
+  connection: local
   gather_facts: no
   collections:
     - kubernetes.core
