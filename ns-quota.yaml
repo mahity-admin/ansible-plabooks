@@ -1,0 +1,32 @@
+---
+- name: Create namespace and apply resource quota
+  hosts: localhost
+  gather_facts: no
+  collections:
+    - kubernetes.core
+
+  tasks:
+    - name: Create namespace 'namespace1'
+      k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: namespace1
+
+    - name: Apply resource quota to 'namespace1'
+      k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ResourceQuota
+          metadata:
+            name: compute-resources
+            namespace: namespace1
+          spec:
+            hard:
+              requests.cpu: "1"
+              requests.memory: "1Gi"
+              limits.cpu: "2"
+              limits.memory: "2Gi"
