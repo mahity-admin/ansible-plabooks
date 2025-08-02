@@ -5,13 +5,9 @@
   collections:
     - kubernetes.core
 
-  vars:
-    kubeconfig_path: /root/.kube/config  # <-- Update this path if your kubeconfig is elsewhere
-
   tasks:
     - name: Create namespace 'namespace1'
       k8s:
-        kubeconfig: "{{ kubeconfig_path }}"
         state: present
         definition:
           apiVersion: v1
@@ -21,7 +17,6 @@
 
     - name: Apply resource quota to 'namespace1'
       k8s:
-        kubeconfig: "{{ kubeconfig_path }}"
         state: present
         definition:
           apiVersion: v1
